@@ -54,7 +54,7 @@ static int almashot_inited = 0;
 static Uint8 *OutPic = NULL;
 
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_almalence_plugins_processing_objectremoval_AlmaCLRShot_Initialize
+    extern "C" JNIEXPORT jstring JNICALL Java_com_almalence_plugins_processing_objectremoval_AlmaCLRShot_Initialize
 (
 	JNIEnv* env,
 	jobject thiz

@@ -20,12 +20,21 @@ package com.almalence.plugins.capture.ocr;
 
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
+import android.hardware.camera2.CaptureResult;
 import android.os.CountDownTimer;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.hardware.camera2.CaptureResult;
+
+import com.almalence.opencam.ApplicationInterface;
+import com.almalence.opencam.ApplicationScreen;
+import com.almalence.opencam.CameraParameters;
+import com.almalence.opencam.PluginCapture;
+import com.almalence.opencam.PluginManager;
+import com.almalence.opencam.R;
+import com.almalence.opencam.cameracontroller.CameraController;
+import com.almalence.opencam.ui.GUI.CameraParameter;
 
 /* <!-- +++
 import com.almalence.opencam_plus.cameracontroller.CameraController;
@@ -38,14 +47,12 @@ import com.almalence.opencam_plus.CameraParameters;
 import com.almalence.opencam_plus.R;
 +++ --> */
 //<!-- -+-
-import com.almalence.opencam.cameracontroller.CameraController;
-import com.almalence.opencam.ui.GUI.CameraParameter;
-import com.almalence.opencam.ApplicationInterface;
-import com.almalence.opencam.ApplicationScreen;
-import com.almalence.opencam.CameraParameters;
-import com.almalence.opencam.PluginCapture;
-import com.almalence.opencam.PluginManager;
-import com.almalence.opencam.R;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.imgcodecs.Imgcodecs;
+
+import java.io.File;
 //-+- -->
 
 /***

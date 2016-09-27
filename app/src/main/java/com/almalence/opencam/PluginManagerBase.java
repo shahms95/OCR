@@ -43,6 +43,8 @@ import java.util.Map.Entry;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.TargetApi;
@@ -1408,6 +1410,10 @@ abstract public class PluginManagerBase implements PluginManagerInterface
 
 	public void saveInputFile(boolean isYUV, Long SessionID, int i, byte[] buffer, int yuvBuffer, String fileFormat)
 	{
+		CameraController.Size imageSize = CameraController.getCameraImageSize();
+		Mat mat = new Mat(imageSize.getWidth(), imageSize.getHeight(), CvType.CV_8UC3);
+		mat.put(0, 0, buffer);
+
 		// if Android 5+ use new saving method.
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 		{
@@ -1415,7 +1421,6 @@ abstract public class PluginManagerBase implements PluginManagerInterface
 			return;
 		}
 
-		CameraController.Size imageSize = CameraController.getCameraImageSize();
 		ContentValues values = null;
 		String resultOrientation = getFromSharedMem("frameorientation" + (i + 1) + Long.toString(SessionID));
 		if (resultOrientation == null)

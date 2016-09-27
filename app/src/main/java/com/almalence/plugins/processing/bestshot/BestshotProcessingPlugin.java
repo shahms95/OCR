@@ -25,6 +25,7 @@ package com.almalence.plugins.processing.bestshot;
  import com.almalence.opencam_plus.cameracontroller.CameraController;
  +++ --> */
 // <!-- -+-
+
 import com.almalence.opencam.ConfigParser;
 import com.almalence.opencam.PluginManager;
 import com.almalence.opencam.PluginProcessing;
@@ -37,87 +38,79 @@ import com.almalence.plugins.processing.bestshot.AlmaShotBestShot;
  * from captured to result.
  ***/
 
-public class BestshotProcessingPlugin extends PluginProcessing
-{
-	private long	sessionID	= 0;
+public class BestshotProcessingPlugin extends PluginProcessing {
+    private long sessionID = 0;
 
-	public BestshotProcessingPlugin()
-	{
-		super("com.almalence.plugins.bestshotprocessing", "bestshotmode", 0, 0, 0, null);
-	}
+    public BestshotProcessingPlugin() {
+        super("com.almalence.plugins.bestshotprocessing", "bestshotmode", 0, 0, 0, null);
+    }
 
-	@Override
-	public void onStartProcessing(long SessionID)
-	{
-		sessionID = SessionID;
+    @Override
+    public void onStartProcessing(long SessionID) {
+        sessionID = SessionID;
 
-		PluginManager.getInstance().addToSharedMem("modeSaveName" + sessionID,
-				ConfigParser.getInstance().getMode(mode).modeSaveName);
+        PluginManager.getInstance().addToSharedMem("modeSaveName" + sessionID,
+                ConfigParser.getInstance().getMode(mode).modeSaveName);
 
-		int mImageWidth = Integer.parseInt(PluginManager.getInstance().getFromSharedMem("imageWidth" + sessionID));
-		int mImageHeight = Integer.parseInt(PluginManager.getInstance().getFromSharedMem("imageHeight" + sessionID));
+        int mImageWidth = Integer.parseInt(PluginManager.getInstance().getFromSharedMem("imageWidth" + sessionID));
+        int mImageHeight = Integer.parseInt(PluginManager.getInstance().getFromSharedMem("imageHeight" + sessionID));
 
-		String num = PluginManager.getInstance().getFromSharedMem("amountofcapturedframes" + sessionID);
-		if (num == null)
-			return;
-		int imagesAmount = Integer.parseInt(num);
+        String num = PluginManager.getInstance().getFromSharedMem("amountofcapturedframes" + sessionID);
+        if (num == null)
+            return;
+        int imagesAmount = Integer.parseInt(num);
 
-		if (imagesAmount == 0)
-			imagesAmount = 1;
+        if (imagesAmount == 0)
+            imagesAmount = 1;
 
-		int orientation = Integer.parseInt(PluginManager.getInstance()
-				.getFromSharedMem("frameorientation1" + sessionID));
-		AlmaShotBestShot.Initialize();
+        int orientation = Integer.parseInt(PluginManager.getInstance()
+                .getFromSharedMem("frameorientation1" + sessionID));
+        AlmaShotBestShot.Initialize();
 
-		int[] compressed_frame = new int[imagesAmount];
-		int[] compressed_frame_len = new int[imagesAmount];
+        int[] compressed_frame = new int[imagesAmount];
+        int[] compressed_frame_len = new int[imagesAmount];
 
-		for (int i = 0; i < imagesAmount; i++)
-		{
-			compressed_frame[i] = Integer.parseInt(PluginManager.getInstance().getFromSharedMem(
-					"frame" + (i + 1) + sessionID));
-			compressed_frame_len[i] = Integer.parseInt(PluginManager.getInstance().getFromSharedMem(
-					"framelen" + (i + 1) + sessionID));
-		}
+        for (int i = 0; i < imagesAmount; i++) {
+            compressed_frame[i] = Integer.parseInt(PluginManager.getInstance().getFromSharedMem(
+                    "frame" + (i + 1) + sessionID));
+            compressed_frame_len[i] = Integer.parseInt(PluginManager.getInstance().getFromSharedMem(
+                    "framelen" + (i + 1) + sessionID));
+        }
 
-		AlmaShotBestShot.AddYUVFrames(compressed_frame, imagesAmount, mImageWidth, mImageHeight);
+        AlmaShotBestShot.AddYUVFrames(compressed_frame, imagesAmount, mImageWidth, mImageHeight);
 
-		int idxResult = AlmaShotBestShot.BestShotProcess(imagesAmount, mImageWidth, mImageHeight);
+        int idxResult = AlmaShotBestShot.BestShotProcess(imagesAmount, mImageWidth, mImageHeight);
 
-		AlmaShotBestShot.Release();
+        AlmaShotBestShot.Release();
 
-		if (orientation == 90 || orientation == 270)
-		{
-			PluginManager.getInstance().addToSharedMem("saveImageWidth" + sessionID, String.valueOf(mImageHeight));
-			PluginManager.getInstance().addToSharedMem("saveImageHeight" + sessionID, String.valueOf(mImageWidth));
-		} else
-		{
-			PluginManager.getInstance().addToSharedMem("saveImageWidth" + sessionID, String.valueOf(mImageWidth));
-			PluginManager.getInstance().addToSharedMem("saveImageHeight" + sessionID, String.valueOf(mImageHeight));
-		}
+        if (orientation == 90 || orientation == 270) {
+            PluginManager.getInstance().addToSharedMem("saveImageWidth" + sessionID, String.valueOf(mImageHeight));
+            PluginManager.getInstance().addToSharedMem("saveImageHeight" + sessionID, String.valueOf(mImageWidth));
+        } else {
+            PluginManager.getInstance().addToSharedMem("saveImageWidth" + sessionID, String.valueOf(mImageWidth));
+            PluginManager.getInstance().addToSharedMem("saveImageHeight" + sessionID, String.valueOf(mImageHeight));
+        }
 
-		int frame = compressed_frame[idxResult];
-		int len = compressed_frame_len[idxResult];
+        int frame = compressed_frame[idxResult];
+        int len = compressed_frame_len[idxResult];
 
-		PluginManager.getInstance().addToSharedMem("resultframe1" + sessionID, String.valueOf(frame));
-		PluginManager.getInstance().addToSharedMem("resultframelen1" + sessionID, String.valueOf(len));
+        PluginManager.getInstance().addToSharedMem("resultframe1" + sessionID, String.valueOf(frame));
+        PluginManager.getInstance().addToSharedMem("resultframelen1" + sessionID, String.valueOf(len));
 
-		boolean cameraMirrored = Boolean.parseBoolean(PluginManager.getInstance().getFromSharedMem(
-				"framemirrored1" + sessionID));
-		PluginManager.getInstance().addToSharedMem("resultframeorientation1" + sessionID, String.valueOf(orientation));
-		PluginManager.getInstance().addToSharedMem("resultframemirrored1" + sessionID, String.valueOf(cameraMirrored));
+        boolean cameraMirrored = Boolean.parseBoolean(PluginManager.getInstance().getFromSharedMem(
+                "framemirrored1" + sessionID));
+        PluginManager.getInstance().addToSharedMem("resultframeorientation1" + sessionID, String.valueOf(orientation));
+        PluginManager.getInstance().addToSharedMem("resultframemirrored1" + sessionID, String.valueOf(cameraMirrored));
 
-		PluginManager.getInstance().addToSharedMem("amountofresultframes" + sessionID, String.valueOf(1));
-	}
+        PluginManager.getInstance().addToSharedMem("amountofresultframes" + sessionID, String.valueOf(1));
+    }
 
-	@Override
-	public boolean isPostProcessingNeeded()
-	{
-		return false;
-	}
+    @Override
+    public boolean isPostProcessingNeeded() {
+        return false;
+    }
 
-	@Override
-	public void onStartPostProcessing()
-	{
-	}
+    @Override
+    public void onStartPostProcessing() {
+    }
 }
