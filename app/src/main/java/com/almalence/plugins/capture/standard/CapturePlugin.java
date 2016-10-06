@@ -22,6 +22,8 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
@@ -55,20 +57,30 @@ import com.almalence.opencam.cameracontroller.CameraController.Size;
 //-+- -->
 import com.almalence.ui.Switch.Switch;
 
+//import org.opencv.core.CvType;
+//import org.opencv.core.Mat;
+
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import android.os.Handler;
 
 /***
  * Implements standard capture plugin - capture single image and save it in
  * shared memory
  ***/
 
+
+
 public class CapturePlugin extends PluginCapture {
+    private Boolean alread_ready = false;
     private static String ModePreference;        // 0=DRO On
     // 1=DRO Off
     private Switch modeSwitcher;
     private int singleModeEV;
-    private static int timeToListen = 3;        //time it needs silence
+    private static int timeToListen = 2;        //time in seconds it needs silence
     private SpeechRecognizer sr;
+    final Handler handler = new Handler();
 
     public CapturePlugin() {
         super("com.almalence.plugins.capture", 0, 0, 0, null);
@@ -239,8 +251,9 @@ public class CapturePlugin extends PluginCapture {
 
     @Override
     public void takePicture() {
-        String TAG = "label1";
+        String TAG = "RL";
         Log.i(TAG, "Entered takePicture");
+        Log.i(TAG, "Button clicked ; already ready value : " + alread_ready );
 
 
         Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -270,8 +283,15 @@ public class CapturePlugin extends PluginCapture {
     @Override
     public void onImageTaken(int frame, byte[] frameData, int frame_len, int format) {
         framesCaptured++;
-        boolean isRAW = (format == CameraController.RAW);
 
+        String TAG = "ImageTaken";
+        Log.d(TAG, "entered onImageTaken  : " + frameData.length + " : " + frame_len);
+        Bitmap bmp= BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
+        //Mat tmp = new Mat(bmp.getHeight(), bmp.getWidth(), CvType.CV_8UC1);
+        Log.d(TAG, "entered onImageTaken  :  Message 2 " );
+
+
+        boolean isRAW = (format == CameraController.RAW);
         PluginManager.getInstance().addToSharedMem("frame" + framesCaptured + SessionID, String.valueOf(frame));
         PluginManager.getInstance().addToSharedMem("framelen" + framesCaptured + SessionID, String.valueOf(frame_len));
 
@@ -330,7 +350,18 @@ public class CapturePlugin extends PluginCapture {
         private static final String TAG = "RL";
 
         public void onReadyForSpeech(Bundle params) {
-            Log.d(TAG, "onReadyForSpeech");
+            if(alread_ready){
+                Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, timeToListen  * 1000);
+                i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
+                i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, "");
+//                startActivityForResult(i, VOICE_COMMAND);
+                sr.startListening(i);
+            }
+            Log.d(TAG, "onReadyForSpeech "+alread_ready.toString());
+            alread_ready = true;
+
         }
 
         public void onBeginningOfSpeech() {
@@ -339,7 +370,7 @@ public class CapturePlugin extends PluginCapture {
 
         public void onRmsChanged(float rmsdB) {
             //Log.d(TAG, "onRmsChanged");
-        }
+;        }
 
         public void onBufferReceived(byte[] buffer) {
             Log.d(TAG, "onBufferReceived");
@@ -350,15 +381,35 @@ public class CapturePlugin extends PluginCapture {
         }
 
         public void onError(int error) {
-            //Log.d(TAG,  "error " +  error);
+            Log.d(TAG,  "error " +  error);
 //            mText.setText("error " + error);
-            Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, timeToListen  * 1000);
-            i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
-            i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, "");
+            if(error == 7) {
+                Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, timeToListen * 1000);
+                i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
+                i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, "");
 //                startActivityForResult(i, VOICE_COMMAND);
-            sr.startListening(i);
+                alread_ready = false;
+                sr.startListening(i);
+            }
+            if(error == 6 || error == 8) {
+//                Long time = System.currentTimeMillis();
+//                String TAG = "RL";
+//                Log.i(TAG, "before sleep" + time.toString());
+//                android.os.SystemClock.sleep(3000);      //wait in milliseconds
+//                time = System.currentTimeMillis();
+//                Log.i(TAG, "after sleep" + time.toString());
+//                takePicture();
+
+                handler.postDelayed(new Runnable(){
+                    @Override
+                            public void run(){
+                        takePicture();
+                    }
+                },1500);
+            }
+
         }
 
         public void onResults(Bundle results) {
@@ -381,8 +432,12 @@ public class CapturePlugin extends PluginCapture {
             i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
             i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,"");
 //                startActivityForResult(i, VOICE_COMMAND);
+            alread_ready = false;
             sr.startListening(i);
+
 //            mText.setText("results: "+String.valueOf(data.size()));
+
+
         }
 
         public void onPartialResults(Bundle partialResults) {

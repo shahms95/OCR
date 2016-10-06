@@ -9,7 +9,6 @@ import com.almalence.opencam.PluginManager;
 import com.almalence.opencam.PluginProcessing;
 import com.almalence.plugins.processing.bestshot.AlmaShotBestShot;
 
-import org.opencv.core.Mat;
 
 public class OCRProcessingPlugin extends PluginProcessing {
     private long	sessionID	= 0;

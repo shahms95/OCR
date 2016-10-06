@@ -47,10 +47,10 @@ import com.almalence.opencam_plus.CameraParameters;
 import com.almalence.opencam_plus.R;
 +++ --> */
 //<!-- -+-
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.imgcodecs.Imgcodecs;
+//import org.opencv.core.CvType;
+//import org.opencv.core.Mat;
+//import org.opencv.core.MatOfByte;
+//import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.File;
 //-+- -->
