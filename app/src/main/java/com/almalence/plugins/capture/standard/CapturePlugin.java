@@ -49,6 +49,7 @@ import com.almalence.opencam.cameracontroller.CameraController.Size;
 import com.almalence.ui.Switch.Switch;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
@@ -81,6 +82,7 @@ public class CapturePlugin extends PluginCapture {
     private int singleModeEV;
     private static int timeToListen = 2;        //time in seconds it needs silence
     private SpeechRecognizer sr;
+    private TextToSpeech t1;
     private static final int TTS_CHECK_CODE = 101;
 
     final Handler handler = new Handler();
@@ -161,6 +163,15 @@ public class CapturePlugin extends PluginCapture {
 //        Intent checkIntent = new Intent();
 //        checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
 //        startActivityForResult(checkIntent, TTS_CHECK_CODE);
+//        startActivityForResult( getApplicationContext(),checkIntent);
+        t1=new TextToSpeech(ApplicationScreen.getMainContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    t1.setLanguage(Locale.UK);
+                }
+            }
+        });
     }
 
     @Override
@@ -212,6 +223,15 @@ public class CapturePlugin extends PluginCapture {
         if (ModePreference.contains("0")) {
             UpdateEv(false, singleModeEV);
         }
+
+        //voice feedback stuff
+        if(t1 !=null){
+            t1.stop();
+            t1.shutdown();
+        }
+        super.onPause();
+        //voice feedback stuff
+
     }
 
     @Override
@@ -369,6 +389,10 @@ public class CapturePlugin extends PluginCapture {
 //                startActivityForResult(i, VOICE_COMMAND);
                 sr.startListening(i);
             }
+            String toSpeak = "ready";
+            if(!t1.isSpeaking())t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+            Log.d(TAG, "I just said ready!");
+
             Log.d(TAG, "onReadyForSpeech "+ already_ready.toString());
             already_ready = true;
 
@@ -432,6 +456,10 @@ public class CapturePlugin extends PluginCapture {
                     ShootDetected = true;
                     Log.d(TAG, "ShootDetected");
 //                    showToast("Taking picture...");
+                    String toSpeak = "detected";
+                    t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+                    Log.d(TAG, "I spoke LALALALALA!!!");
+
                 }
             }
             if (ShootDetected) {
