@@ -50,6 +50,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -151,7 +152,6 @@ abstract public class PluginManagerBase implements PluginManagerInterface
 	protected static Map<Integer, Integer>		exifOrientationMap;
 
 	protected int								saveOption;
-
 	// plugin manager ctor. plugins initialization and filling plugin list
 	protected PluginManagerBase()
 	{

@@ -25,6 +25,7 @@ package com.almalence.opencam;
 //-+- -->
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -106,7 +107,6 @@ public class PluginManager extends PluginManagerBase
 {
 
 	private static PluginManager	pluginManager;
-
 	public static PluginManager getInstance()
 	{
 		if (pluginManager == null)
@@ -118,6 +118,7 @@ public class PluginManager extends PluginManagerBase
 
 	private PluginManager()
 	{
+
 		super();
 	}
 
@@ -181,7 +182,8 @@ public class PluginManager extends PluginManagerBase
 		listVF.add(infosetVFPlugin);
 
 		// Capture
-		CapturePlugin testCapturePlugin = new CapturePlugin();
+//        CapturePlugin testCapturePlugin = new CapturePlugin();
+        CapturePlugin testCapturePlugin = new CapturePlugin();
 		pluginList.put(testCapturePlugin.getID(), testCapturePlugin);
 		listCapture.add(testCapturePlugin);
 

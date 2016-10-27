@@ -24,18 +24,33 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.camera2.CaptureResult;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
-import android.hardware.camera2.CaptureResult;
 import android.widget.Toast;
+
+import com.almalence.opencam.ApplicationInterface;
+import com.almalence.opencam.ApplicationScreen;
+import com.almalence.opencam.PluginCapture;
+import com.almalence.opencam.PluginManager;
+import com.almalence.opencam.R;
+import com.almalence.opencam.cameracontroller.CameraController;
+import com.almalence.opencam.cameracontroller.CameraController.Size;
+import com.almalence.ui.Switch.Switch;
+
+import java.util.ArrayList;
+
+import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
 /* <!-- +++
  import com.almalence.opencam_plus.cameracontroller.CameraController;
@@ -47,23 +62,9 @@ import android.widget.Toast;
  import com.almalence.opencam_plus.R;
  +++ --> */
 // <!-- -+-
-import com.almalence.opencam.ApplicationScreen;
-import com.almalence.opencam.PluginCapture;
-import com.almalence.opencam.PluginManager;
-import com.almalence.opencam.R;
-import com.almalence.opencam.ApplicationInterface;
-import com.almalence.opencam.cameracontroller.CameraController;
-import com.almalence.opencam.cameracontroller.CameraController.Size;
 //-+- -->
-import com.almalence.ui.Switch.Switch;
-
 //import org.opencv.core.CvType;
 //import org.opencv.core.Mat;
-
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-import android.os.Handler;
 
 /***
  * Implements standard capture plugin - capture single image and save it in
@@ -73,18 +74,22 @@ import android.os.Handler;
 
 
 public class CapturePlugin extends PluginCapture {
-    private Boolean alread_ready = false;
+    private Boolean already_ready = false;
     private static String ModePreference;        // 0=DRO On
     // 1=DRO Off
     private Switch modeSwitcher;
     private int singleModeEV;
     private static int timeToListen = 2;        //time in seconds it needs silence
     private SpeechRecognizer sr;
-    final Handler handler = new Handler();
+    private static final int TTS_CHECK_CODE = 101;
 
-    public CapturePlugin() {
+    final Handler handler = new Handler();
+    public CapturePlugin( ) {
         super("com.almalence.plugins.capture", 0, 0, 0, null);
     }
+//    public CapturePlugin() {
+//        super("com.almalence.plugins.capture", 0, 0, 0, null);
+//    }
 
     void UpdateEv(boolean isDro, int ev) {
         if (isDro) {
@@ -147,10 +152,15 @@ public class CapturePlugin extends PluginCapture {
                             R.drawable.plugin_help_dro, "droShowHelp");
             }
         });
+        //speech recognizer stuff
         sr = SpeechRecognizer.createSpeechRecognizer(ApplicationScreen.getMainContext());
         sr.setRecognitionListener(new listener());
         Log.d("RL", "Created Listener");
 
+        //voice feedback stuff
+//        Intent checkIntent = new Intent();
+//        checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+//        startActivityForResult(checkIntent, TTS_CHECK_CODE);
     }
 
     @Override
@@ -253,7 +263,7 @@ public class CapturePlugin extends PluginCapture {
     public void takePicture() {
         String TAG = "RL";
         Log.i(TAG, "Entered takePicture");
-        Log.i(TAG, "Button clicked ; already ready value : " + alread_ready );
+        Log.i(TAG, "Button clicked ; already ready value : " + already_ready);
 
 
         Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -350,7 +360,7 @@ public class CapturePlugin extends PluginCapture {
         private static final String TAG = "RL";
 
         public void onReadyForSpeech(Bundle params) {
-            if(alread_ready){
+            if(already_ready){
                 Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                 i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, timeToListen  * 1000);
@@ -359,8 +369,8 @@ public class CapturePlugin extends PluginCapture {
 //                startActivityForResult(i, VOICE_COMMAND);
                 sr.startListening(i);
             }
-            Log.d(TAG, "onReadyForSpeech "+alread_ready.toString());
-            alread_ready = true;
+            Log.d(TAG, "onReadyForSpeech "+ already_ready.toString());
+            already_ready = true;
 
         }
 
@@ -390,7 +400,7 @@ public class CapturePlugin extends PluginCapture {
                 i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
                 i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, "");
 //                startActivityForResult(i, VOICE_COMMAND);
-                alread_ready = false;
+                already_ready = false;
                 sr.startListening(i);
             }
             if(error == 6 || error == 8) {
@@ -418,13 +428,16 @@ public class CapturePlugin extends PluginCapture {
             ArrayList data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             Boolean ShootDetected = false;
             for (int i = 0; !ShootDetected && i < data.size(); i++) {
-                if (data.get(i).toString().equals("hello")) {
+                if (data.get(i).toString().equals("click")) {
                     ShootDetected = true;
                     Log.d(TAG, "ShootDetected");
 //                    showToast("Taking picture...");
                 }
             }
-            if (ShootDetected) shoot();
+            if (ShootDetected) {
+                shoot();
+//                showToast("SHOOTING!!!");
+            }
 
             Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -432,7 +445,7 @@ public class CapturePlugin extends PluginCapture {
             i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Waiting for command");
             i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,"");
 //                startActivityForResult(i, VOICE_COMMAND);
-            alread_ready = false;
+            already_ready = false;
             sr.startListening(i);
 
 //            mText.setText("results: "+String.valueOf(data.size()));
@@ -477,4 +490,22 @@ public class CapturePlugin extends PluginCapture {
             });
         }
     }
+//    public void showToast(final String toast)
+//    {
+//        runOnUiThread(new Runnable() {
+//            public void run()
+//            {
+//                Toast.makeText(MyActivity.this, toast, Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
+//    private Runnable show_toast = new Runnable()
+//    {
+//        public void run()
+//        {
+////            Toast.makeText(Autoamtion.this, "My Toast message", Toast.LENGTH_SHORT)
+////                    .show();
+//            Toast.makeText(activity, "Hello", Toast.LENGTH_SHORT).show();
+//        }
+//    };
 }
